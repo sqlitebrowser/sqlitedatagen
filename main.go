@@ -13,8 +13,8 @@ import (
 
 var (
 	outputDir = "Databases"
-	fileName = "gen.sqlite"
-	numRows = 10000 // 10000 makes for a 5.3MB file on my Linux desktop.  Adjust to suit your desired target file size
+	fileName = "5.3mb.sqlite"
+	numRows = 10000 // 10000 makes a 5.3MB file (taking 6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
 )
 
 func main() {
@@ -29,8 +29,8 @@ func main() {
 	// If the database file already exists, nuke the file
 	_, err = os.Stat(fn)
 	if err == nil {
-		// No error occurred when looking for an exists file, which means something is there.  For now, we're just
-		// going to blindly kill the existing thing without an kind of better safeguards
+		// No error occurred when looking for an existing file, which means something is there.  For now, we're just
+		// going to blindly kill the existing thing without any kind of better safeguard
 		log.Printf("A SQLite database appears to be there already... removing it")
 		os.Remove(fn)
 	}
