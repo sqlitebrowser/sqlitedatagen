@@ -18,7 +18,17 @@ numRows = 10000
 
 A row count of 10000 makes for a 5.3MB file on my Linux desktop.
 
-Adjust to suit your desired target file size.
+Adjust the variables to suit your desired target file name and
+size, then run it:
+
+```
+$ go run main.go
+2017/08/17 13:30:52 A SQLite database appears to be there already... removing it
+2017/08/17 13:30:52 Creating new SQLite database file '/home/jc/Databases/gen.sqlite'
+2017/08/17 13:30:52 Creating tables
+2017/08/17 13:30:52 Adding data
+2017/08/17 13:30:52 SQLite database generation completed
+```
 
 
 ### Why?
