@@ -13,8 +13,8 @@ import (
 
 var (
 	outputDir = "Databases"
-	fileName = "5.3mb.sqlite"
-	numRows = 10000 // 10000 makes a 5.3MB file (taking 6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
+	fileName = "52mb.sqlite"
+	numRows = 100000 // 100000 makes a 52MB file (taking 6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
 )
 
 func main() {
@@ -43,6 +43,22 @@ func main() {
 		return
 	}
 	defer sdb.Close()
+
+	// Enable WAL mode
+	err = sdb.Select("PRAGMA journal_mode=WAL", func(s *sqlite.Stmt) error {
+		return nil
+	})
+	if err != nil {
+		log.Printf("Error when setting WAL mode: %s\n", err)
+		return
+	}
+
+	// Turn off synchronous mode
+	err = sdb.Exec("PRAGMA synchronous=OFF")
+	if err != nil {
+		log.Printf("Error when setting synchronous mode: %s\n", err)
+		return
+	}
 
 	// Generate schema
 	log.Println("Creating tables")

@@ -12,11 +12,12 @@ eg:
 
 ```
 outputDir = "Databases"
-fileName = "gen.sqlite"
-numRows = 10000
+fileName = "52mb.sqlite"
+numRows = 100000
 ```
 
-A row count of 10000 makes for a 5.3MB file on my Linux desktop.
+A row count of 100000 makes a 52MB file (taking 6 seconds) on my
+(old) Linux desktop.
 
 Adjust the variables to suit your desired target file name and
 size, then run it:
