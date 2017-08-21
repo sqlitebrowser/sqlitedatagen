@@ -15,7 +15,7 @@ import (
 var (
 	outputDir = "Databases"
 	fileName = "72mb.sqlite"
-	numRows = 100000 // 100000 makes a 72MB file (taking ~4.6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
+	numRows = 100000 // 100000 makes a 72MB file (taking ~4.5 seconds) on my Linux desktop.  Adjust to suit your desired target file size
 )
 
 type oneRow struct {
@@ -58,12 +58,12 @@ func main() {
 	}
 	defer sdb.Close()
 
-	// Enable WAL mode
-	err = sdb.Select("PRAGMA journal_mode=WAL", func(s *sqlite.Stmt) error {
+	// Disable the journal
+	err = sdb.Select("PRAGMA journal_mode=OFF", func(s *sqlite.Stmt) error {
 		return nil
 	})
 	if err != nil {
-		log.Printf("Error when setting WAL mode: %s\n", err)
+		log.Printf("Error when disabling the journal: %s\n", err)
 		return
 	}
 
