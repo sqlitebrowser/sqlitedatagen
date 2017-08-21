@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gwenn/gosqlite"
 	"github.com/minio/go-homedir"
@@ -14,8 +15,21 @@ import (
 var (
 	outputDir = "Databases"
 	fileName = "72mb.sqlite"
-	numRows = 100000 // 100000 makes a 72MB file (taking ~7.6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
+	numRows = 100000 // 100000 makes a 72MB file (taking ~4.6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
 )
+
+type oneRow struct {
+	key_data int
+	int_data int
+	signed_data int
+	float_data float32
+	double_data float64
+	decim_data string
+	date_data string
+	code_data string
+	name_data string
+	address_data string
+}
 
 func main() {
 	// Determine full path to target file
@@ -87,8 +101,17 @@ func main() {
 		}
 	}
 
+	// Launch a worker pool generating row data
+	cpus := runtime.NumCPU()
+	log.Printf("# of cpu's detected: %d.  Launching %d data generation workers\n", cpus, cpus)
+	results := make(chan *oneRow, cpus * 5) // 5 seems ok, less than 5 seems slightly slower (not properly measured though!)
+	for w := 0; w < cpus; w++ {
+		go worker(results)
+	}
+
 	// Bulk insert row data (inside a single transaction)
 	log.Println("Adding data")
+	var r *oneRow
 	for _, tbl := range tableNames {
 		err = sdb.Begin()
 		if err != nil {
@@ -98,35 +121,19 @@ func main() {
 
 		// Prepare the insert statement
 		dbQuery = fmt.Sprintf(`
-		INSERT into %s (col_key, col_int, col_signed, col_float, col_double, col_decim, col_date, col_code, col_name, col_address)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, tbl)
+			INSERT into %s (col_key, col_int, col_signed, col_float, col_double, col_decim, col_date, col_code, col_name, col_address)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, tbl)
 		stmt, err := sdb.Prepare(dbQuery)
 		if err != nil {
 			log.Printf("Error when preparing statement for inserts: %s\n", err)
 			return
 		}
 
+		// Insert the data
 		for i := 0; i < numRows; i++ {
-			// Generate test data
-			key_data := rand.Int()
-			int_data := rand.Int()
-			signed_data := rand.Int()
-			float_data := rand.Float32()
-			double_data := rand.Float64()
-			decim_data := fmt.Sprintf("%d.%d", rand.Intn(100000000000000000), rand.Intn(100))
-			date_data := fmt.Sprintf("%d%d%d%d-%d%d-%d%d", rand.Intn(10), rand.Intn(10), rand.Intn(10),
-				rand.Intn(10), rand.Intn(10), rand.Intn(10), rand.Intn(10), rand.Intn(10))
-			code_data := randomString(10)
-			name_data := randomString(20)
-			addLen := rand.Intn(80)
-			if addLen < 8 {
-				addLen = 8
-			}
-			address_data := randomString(addLen)
-
-			// Insert the data
-			err = stmt.Exec(key_data, int_data, signed_data, float_data, double_data, decim_data, date_data,
-				code_data, name_data, address_data)
+			r = <- results
+			err = stmt.Exec(r.key_data, r.int_data, r.signed_data, r.float_data, r.double_data, r.decim_data,
+				r.date_data, r.code_data, r.name_data, r.address_data)
 			if err != nil {
 				log.Printf("Error when inserting data: %s\n", err)
 				return
@@ -153,6 +160,28 @@ func randomString(length int) string {
 	for i := range randomString {
 		randomString[i] = alphaNum[rand.Intn(len(alphaNum))]
 	}
-
 	return string(randomString)
+}
+
+// Goroutine which generates rows of test data
+func worker(results chan <- *oneRow) {
+	for {
+		row := new(oneRow)
+		row.key_data = rand.Int()
+		row.int_data = rand.Int()
+		row.signed_data = rand.Int()
+		row.float_data = rand.Float32()
+		row.double_data = rand.Float64()
+		row.decim_data = fmt.Sprintf("%d.%d", rand.Intn(100000000000000000), rand.Intn(100))
+		row.date_data = fmt.Sprintf("%d%d%d%d-%d%d-%d%d", rand.Intn(10), rand.Intn(10), rand.Intn(10),
+			rand.Intn(10), rand.Intn(10), rand.Intn(10), rand.Intn(10), rand.Intn(10))
+		row.code_data = randomString(10)
+		row.name_data = randomString(20)
+		addLen := rand.Intn(80)
+		if addLen < 8 {
+			addLen = 8
+		}
+		row.address_data = randomString(addLen)
+		results <- row
+	}
 }

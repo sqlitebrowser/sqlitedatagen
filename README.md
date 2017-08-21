@@ -16,7 +16,7 @@ fileName = "72mb.sqlite"
 numRows = 100000
 ```
 
-A row count of 100000 makes a 72MB file (taking ~7.6 seconds) on my
+A row count of 100000 makes a 72MB file (taking ~4.6 seconds) on my
 (old) Linux desktop.
 
 Adjust the variables to suit your desired target file name and
@@ -24,11 +24,12 @@ size, then run it:
 
 ```
 $ go run main.go
-2017/08/17 13:30:52 A SQLite database appears to be there already... removing it
-2017/08/17 13:30:52 Creating new SQLite database file '/home/jc/Databases/gen.sqlite'
-2017/08/17 13:30:52 Creating tables
-2017/08/17 13:30:52 Adding data
-2017/08/17 13:30:52 SQLite database generation completed
+2017/08/21 20:01:39 A SQLite database appears to be there already... removing it
+2017/08/21 20:01:39 Creating new SQLite database file '/home/jc/Databases/72mb.sqlite'
+2017/08/21 20:01:39 Creating tables
+2017/08/21 20:01:39 # of cpu's detected: 4.  Launching 4 data generation workers
+2017/08/21 20:01:39 Adding data
+2017/08/21 20:01:44 SQLite database generation completed
 ```
 
 
