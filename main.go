@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"path/filepath"
 
 	"github.com/gwenn/gosqlite"
 	"github.com/minio/go-homedir"
-	"os"
 )
 
 var (
 	outputDir = "Databases"
-	fileName = "52mb.sqlite"
-	numRows = 100000 // 100000 makes a 52MB file (taking 6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
+	fileName = "72mb.sqlite"
+	numRows = 100000 // 100000 makes a 72MB file (taking ~7.6 seconds) on my Linux desktop.  Adjust to suit your desired target file size
 )
 
 func main() {
@@ -118,7 +118,11 @@ func main() {
 				rand.Intn(10), rand.Intn(10), rand.Intn(10), rand.Intn(10), rand.Intn(10))
 			code_data := randomString(10)
 			name_data := randomString(20)
-			address_data := randomString(rand.Intn(80))
+			addLen := rand.Intn(80)
+			if addLen < 8 {
+				addLen = 8
+			}
+			address_data := randomString(addLen)
 
 			// Insert the data
 			err = stmt.Exec(key_data, int_data, signed_data, float_data, double_data, decim_data, date_data,
@@ -145,7 +149,7 @@ func main() {
 // Generate a random string
 func randomString(length int) string {
 	const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
-	randomString := make([]byte, 10)
+	randomString := make([]byte, length)
 	for i := range randomString {
 		randomString[i] = alphaNum[rand.Intn(len(alphaNum))]
 	}
