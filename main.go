@@ -74,10 +74,8 @@ func main() {
 		return
 	}
 
-	// Generate schema
+	// Create the schema
 	log.Println("Creating tables")
-
-	// Create the tables
 	tableNames := []string{"uniques", "updates", "hundred", "tenpct", "tiny"}
 	var dbQuery string
 	for _, tbl := range tableNames {
@@ -109,7 +107,7 @@ func main() {
 		go worker(results)
 	}
 
-	// Bulk insert row data (inside a single transaction)
+	// Bulk insert row data (inside a single transaction per table)
 	log.Println("Adding data")
 	var r *oneRow
 	for _, tbl := range tableNames {
@@ -120,8 +118,8 @@ func main() {
 		}
 
 		// Prepare the insert statement
-		dbQuery = fmt.Sprintf(`
-			INSERT into %s (col_key, col_int, col_signed, col_float, col_double, col_decim, col_date, col_code, col_name, col_address)
+		dbQuery := sqlite.Mprintf(`
+			INSERT into %w (col_key, col_int, col_signed, col_float, col_double, col_decim, col_date, col_code, col_name, col_address)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, tbl)
 		stmt, err := sdb.Prepare(dbQuery)
 		if err != nil {
