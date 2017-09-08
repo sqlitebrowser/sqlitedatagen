@@ -102,14 +102,18 @@ func main() {
 	// Launch a worker pool generating row data
 	cpus := runtime.NumCPU()
 	log.Printf("# of cpu's detected: %d.  Launching %d data generation workers\n", cpus, cpus)
-	results := make(chan *oneRow, cpus * 5) // 5 seems ok, less than 5 seems slightly slower (not properly measured though!)
+	results := make(chan *oneRow, cpus * 30) // 30 seems ok, less than 20 seems slightly slower (not properly measured though!)
 	for w := 0; w < cpus; w++ {
 		go worker(results)
 	}
 
 	// Bulk insert row data (inside a single transaction per table)
 	log.Println("Adding data")
-	var r *oneRow
+	//var r1 *oneRow
+	//var r1, r2 *oneRow
+	//var r1, r2, r3 *oneRow
+	//var r1, r2, r3, r4 *oneRow
+	var r1, r2, r3, r4, r5, r6, r7, r8, r9, r10 *oneRow
 	for _, tbl := range tableNames {
 		err = sdb.Begin()
 		if err != nil {
@@ -119,8 +123,12 @@ func main() {
 
 		// Prepare the insert statement
 		dbQuery := sqlite.Mprintf(`
-			INSERT into %w (col_key, col_int, col_signed, col_float, col_double, col_decim, col_date, col_code, col_name, col_address)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, tbl)
+			INSERT into %w (col_key, col_int, col_signed, col_float, col_double, col_decim, col_date, col_code, col_name, col_address) VALUES
+			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?),
+			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?),
+			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?),
+			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			tbl)
 		stmt, err := sdb.Prepare(dbQuery)
 		if err != nil {
 			log.Printf("Error when preparing statement for inserts: %s\n", err)
@@ -128,10 +136,28 @@ func main() {
 		}
 
 		// Insert the data
-		for i := 0; i < numRows; i++ {
-			r = <- results
-			err = stmt.Exec(r.key_data, r.int_data, r.signed_data, r.float_data, r.double_data, r.decim_data,
-				r.date_data, r.code_data, r.name_data, r.address_data)
+		numLoops := numRows / 10;
+		for i := 0; i < numLoops; i++ {
+			r1 = <- results
+			r2 = <- results
+			r3 = <- results
+			r4 = <- results
+			r5 = <- results
+			r6 = <- results
+			r7 = <- results
+			r8 = <- results
+			r9 = <- results
+			r10 = <- results
+			err = stmt.Exec(r1.key_data, r1.int_data, r1.signed_data, r1.float_data, r1.double_data, r1.decim_data, r1.date_data, r1.code_data, r1.name_data, r1.address_data,
+				r2.key_data, r2.int_data, r2.signed_data, r2.float_data, r2.double_data, r2.decim_data, r2.date_data, r2.code_data, r2.name_data, r2.address_data,
+				r3.key_data, r3.int_data, r3.signed_data, r3.float_data, r3.double_data, r3.decim_data, r3.date_data, r3.code_data, r3.name_data, r3.address_data,
+				r4.key_data, r4.int_data, r4.signed_data, r4.float_data, r4.double_data, r4.decim_data, r4.date_data, r4.code_data, r4.name_data, r4.address_data,
+				r5.key_data, r5.int_data, r5.signed_data, r5.float_data, r5.double_data, r5.decim_data, r5.date_data, r5.code_data, r5.name_data, r5.address_data,
+				r6.key_data, r6.int_data, r6.signed_data, r6.float_data, r6.double_data, r6.decim_data, r6.date_data, r6.code_data, r6.name_data, r6.address_data,
+				r7.key_data, r7.int_data, r7.signed_data, r7.float_data, r7.double_data, r7.decim_data, r7.date_data, r7.code_data, r7.name_data, r7.address_data,
+				r8.key_data, r8.int_data, r8.signed_data, r8.float_data, r8.double_data, r8.decim_data, r8.date_data, r8.code_data, r8.name_data, r8.address_data,
+				r9.key_data, r9.int_data, r9.signed_data, r9.float_data, r9.double_data, r9.decim_data, r9.date_data, r9.code_data, r9.name_data, r9.address_data,
+				r10.key_data, r10.int_data, r10.signed_data, r10.float_data, r10.double_data, r10.decim_data, r10.date_data, r10.code_data, r10.name_data, r10.address_data)
 			if err != nil {
 				log.Printf("Error when inserting data: %s\n", err)
 				return
