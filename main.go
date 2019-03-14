@@ -9,36 +9,33 @@ import (
 	"runtime"
 
 	"github.com/gwenn/gosqlite"
-	"github.com/minio/go-homedir"
 )
 
 var (
-	outputDir = "Databases"
 	fileName = "72mb.sqlite"
-	numRows = 100000 // 100000 makes a 72MB file (taking ~4.5 seconds) on my Linux desktop.  Adjust to suit your desired target file size
+	numRows  = 100000 // 100000 makes a 72MB file (taking ~4.5 seconds) on my Linux desktop.  Adjust to suit your desired target file size
 )
 
 type oneRow struct {
-	key_data int
-	int_data int
-	signed_data int
-	float_data float32
-	double_data float64
-	decim_data string
-	date_data string
-	code_data string
-	name_data string
+	key_data     int
+	int_data     int
+	signed_data  int
+	float_data   float32
+	double_data  float64
+	decim_data   string
+	date_data    string
+	code_data    string
+	name_data    string
 	address_data string
 }
 
 func main() {
 	// Determine full path to target file
-	userHome, err := homedir.Dir()
+	d, err := os.Getwd()
 	if err != nil {
-		log.Printf("User home directory couldn't be determined: %s", "\n")
-		return
+		log.Fatalf(err.Error())
 	}
-	fn := filepath.Join(userHome, outputDir, fileName)
+	fn := filepath.Join(d, fileName)
 
 	// If the database file already exists, nuke the file
 	_, err = os.Stat(fn)
@@ -51,7 +48,7 @@ func main() {
 
 	// Create empty SQLite database
 	log.Printf("Creating new SQLite database file '%s'\n", fn)
-	sdb, err := sqlite.Open(fn, sqlite.OpenCreate | sqlite.OpenReadWrite)
+	sdb, err := sqlite.Open(fn, sqlite.OpenCreate|sqlite.OpenReadWrite)
 	if err != nil {
 		log.Printf("Couldn't open database: %s", err)
 		return
@@ -102,7 +99,7 @@ func main() {
 	// Launch a worker pool generating row data
 	cpus := runtime.NumCPU()
 	log.Printf("# of cpu's detected: %d.  Launching %d data generation workers\n", cpus, cpus)
-	results := make(chan *oneRow, cpus * 5) // 5 seems ok, less than 5 seems slightly slower (not properly measured though!)
+	results := make(chan *oneRow, cpus*5) // 5 seems ok, less than 5 seems slightly slower (not properly measured though!)
 	for w := 0; w < cpus; w++ {
 		go worker(results)
 	}
@@ -129,7 +126,7 @@ func main() {
 
 		// Insert the data
 		for i := 0; i < numRows; i++ {
-			r = <- results
+			r = <-results
 			err = stmt.Exec(r.key_data, r.int_data, r.signed_data, r.float_data, r.double_data, r.decim_data,
 				r.date_data, r.code_data, r.name_data, r.address_data)
 			if err != nil {
@@ -162,7 +159,7 @@ func randomString(length int) string {
 }
 
 // Goroutine which generates rows of test data
-func worker(results chan <- *oneRow) {
+func worker(results chan<- *oneRow) {
 	for {
 		row := new(oneRow)
 		row.key_data = rand.Int()
